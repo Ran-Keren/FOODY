@@ -52,7 +52,8 @@
       #final-choice img { width: 240px; height: 240px; }
     }
 
-    #user-info { margin-top: 20px; }
+    #user-info { margin-top: 20px; font-size: 16px; color: #333; }
+    #user-info span { margin-right: 15px; }
     input, select { padding: 5px; margin: 5px; font-size: 16px; }
     button { padding: 8px 16px; font-size: 16px; cursor: pointer; }
   </style>
@@ -61,16 +62,24 @@
   <h1>🍽️ Food Chooser</h1>
 
   <div id="user-info">
-    <label>Age: <input type="number" id="age" min="1" max="120"></label>
-    <label>Gender: 
-      <select id="gender">
-        <option value="">Select</option>
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
-        <option value="Other">Other</option>
-      </select>
-    </label>
-    <button id="start-btn">Start</button>
+    <div id="user-form">
+      <label>Age: <input type="number" id="age" min="1" max="120"></label>
+      <label>Gender: 
+        <select id="gender">
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </label>
+      <button id="start-btn">Start</button>
+    </div>
+    <div id="user-details" style="display:none; margin-top:10px;">
+      <span id="display-timestamp"></span>
+      <span id="display-age"></span>
+      <span id="display-gender"></span>
+      <span id="display-ip"></span>
+    </div>
   </div>
 
   <p id="pair-counter"></p>
@@ -81,10 +90,9 @@
     <div id="all-dishes" class="images"></div>
   </div>
 
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD-9VrD_c2TLM2Y_KLoQVGkKPKn4b9Y-OI",
@@ -124,102 +132,104 @@
     ];
 
     const pairs = [];
-    for (let i = 0; i < images.length; i += 2) {
-      pairs.push([i, i + 1]); // store indexes instead of urls
-    }
+    for (let i = 0; i < images.length; i += 2) pairs.push([i, i+1]);
 
     let currentPair = 0;
     const choices = [];
-    let userIP = "";
-    let userAge = "";
-    let userGender = "";
+    let userIP = "", userAge = "", userGender = "", timestamp;
 
     const pairDiv = document.getElementById("image-pair");
     const pairCounter = document.getElementById("pair-counter");
     const finalDiv = document.getElementById("final-choice");
     const allDishesDiv = document.getElementById("all-dishes");
     const startBtn = document.getElementById("start-btn");
+    const userFormDiv = document.getElementById("user-form");
+    const userDetailsDiv = document.getElementById("user-details");
+    const displayAge = document.getElementById("display-age");
+    const displayGender = document.getElementById("display-gender");
+    const displayIP = document.getElementById("display-ip");
+    const displayTimestamp = document.getElementById("display-timestamp");
 
     startBtn.addEventListener("click", async () => {
       userAge = document.getElementById("age").value;
       userGender = document.getElementById("gender").value;
-      if(!userAge || !userGender) {
-        alert("Please enter age and select gender.");
-        return;
-      }
+      if(!userAge || !userGender) { alert("Please enter age and select gender."); return; }
 
-      // Get user IP
+      timestamp = new Date();
+      displayTimestamp.textContent = `Timestamp: ${timestamp.toLocaleString()}`;
+
+      // Get IP
       try {
         const res = await fetch('https://api.ipify.org?format=json');
-        const data = await res.json();
-        userIP = data.ip;
-      } catch(e) {
-        console.error("IP fetch error:", e);
-        userIP = "unknown";
-      }
+        userIP = (await res.json()).ip;
+      } catch(e) { userIP="unknown"; }
 
-      document.getElementById("user-info").style.display = "none";
+      displayAge.textContent = `Age: ${userAge}`;
+      displayGender.textContent = `Gender: ${userGender}`;
+      displayIP.textContent = `IP: ${userIP}`;
+
+      userFormDiv.style.display = "none";
+      userDetailsDiv.style.display = "block";
       showPair();
     });
 
     function showPair() {
-      if (currentPair < pairs.length) {
+      if(currentPair < pairs.length){
         pairDiv.innerHTML = "";
-        pairCounter.textContent = `Pair ${currentPair + 1} of ${pairs.length}`;
-        pairs[currentPair].forEach(index => {
+        pairCounter.textContent = `Pair ${currentPair+1} of ${pairs.length}`;
+        pairs[currentPair].forEach(i=>{
           const img = document.createElement("img");
-          img.src = images[index];
-          img.onclick = () => selectChoice(index);
+          img.src = images[i];
+          img.onclick = ()=>selectChoice(i);
           pairDiv.appendChild(img);
         });
-      } else {
-        showFinalChoice();
-      }
+      } else showFinalChoice();
     }
 
-    async function selectChoice(index) {
-      choices.push({ pair: currentPair + 1, choice: index });
+    async function selectChoice(index){
+      choices.push({pair: currentPair+1, choice: index});
       currentPair++;
       showPair();
     }
 
-    function showFinalChoice() {
-      pairDiv.innerHTML = "";
-      pairCounter.textContent = "";
-      finalDiv.style.display = "block";
-      allDishesDiv.innerHTML = "";
-      images.forEach((url, index) => {
+    function showFinalChoice(){
+      pairDiv.innerHTML="";
+      pairCounter.textContent="";
+      finalDiv.style.display="block";
+      allDishesDiv.innerHTML="";
+      images.forEach((url,index)=>{
         const img = document.createElement("img");
-        img.src = url;
-        img.onclick = () => saveFinalChoice(index);
+        img.src=url;
+        img.onclick=()=>saveFinalChoice(index);
         allDishesDiv.appendChild(img);
       });
     }
 
-    async function saveFinalChoice(finalIndex) {
-      try {
-        await addDoc(collection(db, "foodChoices"), {
-          timestamp: new Date(),
-          choices: choices,
+    async function saveFinalChoice(finalIndex){
+      try{
+        // Generate numbered document name
+        const colRef = collection(db,"foodChoices");
+        const snapshot = await getDocs(colRef);
+        const docId = `session_${snapshot.size+1}`;
+
+        await setDoc(doc(db,"foodChoices",docId),{
+          timestamp,
+          choices,
           finalChoice: finalIndex,
           age: userAge,
           gender: userGender,
           ip: userIP
         });
+
         alert("✅ Thanks! Your choices were saved.");
-        finalDiv.innerHTML = "<h2>🎉 All done! Thanks for participating.</h2>";
-      } catch (e) {
-        console.error("Error saving: ", e);
-      }
+        finalDiv.innerHTML="<h2>🎉 All done! Thanks for participating.</h2>";
+      }catch(e){ console.error("Error saving:", e); }
     }
 
     // Prevent double-tap zoom
-    document.addEventListener('touchend', function (event) {
-      if (event.touches.length > 1) {
-        event.preventDefault();
-      }
-    }, { passive: false });
-
+    document.addEventListener('touchend', function(event){
+      if(event.touches.length>1) event.preventDefault();
+    }, {passive:false});
   </script>
 </body>
 </html>
