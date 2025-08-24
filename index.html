@@ -47,9 +47,22 @@
 <!-- Step 3: Age -->
 <div id="step-age" style="display:none;">
   <h2>? גיל</h2>
-  <input type="number" id="age" min="1" max="120">
+  <select id="age">
+    <option value="">בחר גיל</option>
+  </select>
   <button id="age-submit">אישור</button>
 </div>
+
+<script>
+// Populate age dropdown dynamically
+const ageSelect = document.getElementById("age");
+for (let i = 1; i <= 120; i++) {
+  const option = document.createElement("option");
+  option.value = i;
+  option.textContent = i;
+  ageSelect.appendChild(option);
+}
+</script>
 
 <p id="instruction">נא לבחור את המנה שנראית הכי טוב ברגע זה מבין 2 המנות</p>
 <p id="pair-counter"></p>
@@ -209,6 +222,7 @@ document.addEventListener('touchend',function(event){if(event.touches.length>1) 
 </script>
 </body>
 </html>
+
 
 
 
