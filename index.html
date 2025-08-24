@@ -97,11 +97,10 @@
       "https://i.imgur.com/gdhhsZS.jpeg","https://i.imgur.com/dnCbAG1.jpeg","https://i.imgur.com/pAfmo2x.jpeg"
     ];
 
-    // Shuffle images into 30 pairs
-    const shuffled = [...images].sort(() => Math.random() - 0.5);
+
     const pairs = [];
-    for (let i = 0; i < shuffled.length; i += 2) {
-      pairs.push([shuffled[i], shuffled[i + 1]]);
+    for (let i = 0; i < images.length; i += 2) {
+      pairs.push([images[i], images[i + 1]]);
     }
 
     let currentPair = 0;
@@ -162,6 +161,7 @@
   </script>
 </body>
 </html>
+
 
 
 
