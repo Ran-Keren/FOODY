@@ -12,7 +12,7 @@
   img { width: 240px; height: 240px; object-fit: cover; cursor: pointer; border: 5px solid transparent; border-radius: 10px; transition: transform 0.2s; touch-action: manipulation; }
   img:hover { border-color: #007bff; }
   #pair-counter { font-size: 18px; font-weight: bold; margin-top: 15px; color: #444; }
-  #instruction { font-size: 20px; font-weight: bold; margin-top: 15px; color: #222; }
+  #instruction { font-size: 20px; font-weight: bold; margin-top: 15px; color: #222; display: none; }
   #final-choice { display: none; margin-top: 30px; }
   #final-choice img { width: 190px; height: 190px; object-fit: cover; margin: 5px; touch-action: manipulation; }
 
@@ -31,13 +31,12 @@
       <option value="">Select</option>
       <option value="Male">Male</option>
       <option value="Female">Female</option>
-      <option value="Other">Other</option>
     </select>
   </label>
 </div>
 
-<p id="instruction">Choose the dish you prefer the most from each pair!</p>
 <p id="pair-counter"></p>
+<p id="instruction">Choose the dish you prefer the most from each pair!</p>
 <div class="images" id="image-pair"></div>
 
 <div id="final-choice">
@@ -89,7 +88,7 @@ const pairs = [];
 for(let i=0;i<images.length;i+=2) pairs.push([i,i+1]);
 
 let currentPair=0;
-const _names=[];
+const total_choises=[];
 let userIP="", userAge="", userGender="", timestamp;
 
 const pairDiv=document.getElementById("image-pair");
@@ -113,6 +112,7 @@ function startTestIfValid(){
     .catch(()=>{ userIP="unknown"; });
 
   timestamp = new Date();
+  instruction.style.display = "block"; // show header after images start
   showPair();
 }
 
@@ -126,14 +126,14 @@ function showPair(){
     pairs[currentPair].forEach(i=>{
       const img=document.createElement("img");
       img.src=images[i];
-      img.onclick=()=>selectName(i);
+      img.onclick=()=>selectChoice(i);
       pairDiv.appendChild(img);
     });
   } else showFinalChoice();
 }
 
-function selectName(index){
-  _names.push({pair:currentPair+1,name:index});
+function selectChoice(index){
+  total_choises.push({pair:currentPair+1,choice:index});
   currentPair++;
   showPair();
 }
@@ -165,7 +165,7 @@ async function saveFinalChoice(finalIndex){
   const sessionDoc = doc(db,"foodChoices",serialNum.toString());
   await setDoc(sessionDoc,{
     timestamp, age:userAge, gender:userGender, ip:userIP,
-    _names, finalChoice:finalIndex
+    total_choises, finalChoice:finalIndex
   });
   finalDiv.innerHTML="<h2>🎉 All done! Thanks for participating.</h2>";
 }
