@@ -37,6 +37,13 @@
     color: #444;
   }
 
+  #instruction {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 15px;
+    color: #222;
+  }
+
   #final-choice { display: none; margin-top: 30px; }
 
   #final-choice img {
@@ -54,7 +61,6 @@
 
   #user-info { margin-top: 20px; }
   input, select { padding: 5px; margin: 5px; font-size: 16px; }
-  button { padding: 8px 16px; font-size: 16px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -70,9 +76,9 @@
       <option value="Other">Other</option>
     </select>
   </label>
-  <button id="start-btn">Start</button>
 </div>
 
+<p id="instruction">Choose the dish you prefer the most from each pair!</p>
 <p id="pair-counter"></p>
 <div class="images" id="image-pair"></div>
 
@@ -131,26 +137,31 @@ let userIP="", userAge="", userGender="", timestamp;
 
 const pairDiv=document.getElementById("image-pair");
 const pairCounter=document.getElementById("pair-counter");
+const instruction=document.getElementById("instruction");
 const finalDiv=document.getElementById("final-choice");
 const allDishesDiv=document.getElementById("all-dishes");
-const startBtn=document.getElementById("start-btn");
+const ageInput=document.getElementById("age");
+const genderSelect=document.getElementById("gender");
 
-startBtn.addEventListener("click", async ()=>{
-  userAge=document.getElementById("age").value;
-  userGender=document.getElementById("gender").value;
-  if(!userAge || !userGender){ alert("Please enter age and select gender."); return; }
+function startTestIfValid(){
+  userAge = ageInput.value;
+  userGender = genderSelect.value;
+  if(!userAge || !userGender) return;
+  // hide inputs
+  document.getElementById("user-info").style.display="none";
 
-  // Get IP
-  try{
-    const res = await fetch('https://api.ipify.org?format=json');
-    userIP=(await res.json()).ip;
-  }catch(e){ userIP="unknown"; }
+  // get IP
+  fetch('https://api.ipify.org?format=json')
+    .then(res=>res.json())
+    .then(data=>{ userIP=data.ip; })
+    .catch(()=>{ userIP="unknown"; });
 
   timestamp = new Date();
-
-  document.getElementById("user-info").style.display="none";
   showPair();
-});
+}
+
+ageInput.addEventListener("change", startTestIfValid);
+genderSelect.addEventListener("change", startTestIfValid);
 
 function showPair(){
   if(currentPair < pairs.length){
@@ -162,7 +173,7 @@ function showPair(){
       img.onclick=()=>selectChoice(i);
       pairDiv.appendChild(img);
     });
-  }else showFinalChoice();
+  } else showFinalChoice();
 }
 
 function selectChoice(index){
