@@ -92,7 +92,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD-9VrD_c2TLM2Y_KLoQVGkKPKn4b9Y-OI",
@@ -100,14 +100,13 @@
       projectId: "food-chooser-bc60b",
       storageBucket: "food-chooser-bc60b.firebasestorage.app",
       messagingSenderId: "297303551585",
-      appId: "1:297303551585:web:f36e3b6a7ffad325698420",
+      appId: "1:297303551585:web:f36e3b6ffad325698420",
       measurementId: "G-DETTDWXNPE"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ---- IMAGES (60 total) ----
     const images = [
       "https://i.imgur.com/7Tzdfer.jpeg","https://i.imgur.com/WuE8mlu.jpeg","https://i.imgur.com/S736Ty1.jpeg",
       "https://i.imgur.com/CVPqDdn.jpeg","https://i.imgur.com/LNK68XF.jpeg","https://i.imgur.com/sDSy47f.jpeg",
@@ -137,6 +136,7 @@
     let currentPair = 0;
     const choices = [];
     let userIP = "", userAge = "", userGender = "", timestamp;
+    let sessionDocId = "";
 
     const pairDiv = document.getElementById("image-pair");
     const pairCounter = document.getElementById("pair-counter");
@@ -153,7 +153,7 @@
     startBtn.addEventListener("click", async () => {
       userAge = document.getElementById("age").value;
       userGender = document.getElementById("gender").value;
-      if(!userAge || !userGender) { alert("Please enter age and select gender."); return; }
+      if(!userAge || !userGender){ alert("Please enter age and select gender."); return; }
 
       timestamp = new Date();
       displayTimestamp.textContent = `Timestamp: ${timestamp.toLocaleString()}`;
@@ -162,33 +162,45 @@
       try {
         const res = await fetch('https://api.ipify.org?format=json');
         userIP = (await res.json()).ip;
-      } catch(e) { userIP="unknown"; }
+      } catch(e){ userIP="unknown"; }
 
       displayAge.textContent = `Age: ${userAge}`;
       displayGender.textContent = `Gender: ${userGender}`;
       displayIP.textContent = `IP: ${userIP}`;
 
-      userFormDiv.style.display = "none";
-      userDetailsDiv.style.display = "block";
+      userFormDiv.style.display="none";
+      userDetailsDiv.style.display="block";
+
+      // Create numbered session doc immediately
+      const colRef = collection(db,"foodChoices");
+      const snapshot = await getDocs(colRef);
+      sessionDocId = `session_${snapshot.size+1}`;
+
+      await setDoc(doc(db,"foodChoices",sessionDocId),{
+        timestamp, age:userAge, gender:userGender, ip:userIP, choices:[]
+      });
+
       showPair();
     });
 
-    function showPair() {
+    function showPair(){
       if(currentPair < pairs.length){
-        pairDiv.innerHTML = "";
-        pairCounter.textContent = `Pair ${currentPair+1} of ${pairs.length}`;
+        pairDiv.innerHTML="";
+        pairCounter.textContent=`Pair ${currentPair+1} of ${pairs.length}`;
         pairs[currentPair].forEach(i=>{
           const img = document.createElement("img");
-          img.src = images[i];
-          img.onclick = ()=>selectChoice(i);
+          img.src=images[i];
+          img.onclick=()=>selectChoice(i);
           pairDiv.appendChild(img);
         });
       } else showFinalChoice();
     }
 
     async function selectChoice(index){
-      choices.push({pair: currentPair+1, choice: index});
+      choices.push({pair:currentPair+1, choice:index});
       currentPair++;
+      pairCounter.textContent=`Pair ${currentPair} of ${pairs.length}`;
+      await updateDoc(doc(db,"foodChoices",sessionDocId),{ choices });
       showPair();
     }
 
@@ -198,38 +210,31 @@
       finalDiv.style.display="block";
       allDishesDiv.innerHTML="";
       images.forEach((url,index)=>{
-        const img = document.createElement("img");
+        const img=document.createElement("img");
         img.src=url;
         img.onclick=()=>saveFinalChoice(index);
         allDishesDiv.appendChild(img);
       });
     }
 
+    let finalChoiceSaved=false;
     async function saveFinalChoice(finalIndex){
-      try{
-        // Generate numbered document name
-        const colRef = collection(db,"foodChoices");
-        const snapshot = await getDocs(colRef);
-        const docId = `session_${snapshot.size+1}`;
+      if(finalChoiceSaved) return;
+      finalChoiceSaved=true;
 
-        await setDoc(doc(db,"foodChoices",docId),{
-          timestamp,
-          choices,
-          finalChoice: finalIndex,
-          age: userAge,
-          gender: userGender,
-          ip: userIP
-        });
+      await updateDoc(doc(db,"foodChoices",sessionDocId),{
+        finalChoice: finalIndex
+      });
 
-        alert("✅ Thanks! Your choices were saved.");
-        finalDiv.innerHTML="<h2>🎉 All done! Thanks for participating.</h2>";
-      }catch(e){ console.error("Error saving:", e); }
+      alert("✅ Thanks! Your choices were saved.");
+      finalDiv.innerHTML="<h2>🎉 All done! Thanks for participating.</h2>";
     }
 
-    // Prevent double-tap zoom
+    // Disable double-tap zoom
     document.addEventListener('touchend', function(event){
       if(event.touches.length>1) event.preventDefault();
     }, {passive:false});
+
   </script>
 </body>
 </html>
