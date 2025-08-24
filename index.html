@@ -47,7 +47,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD-9VrD_c2TLM2Y_KLoQVGkKPKn4b9Y-OI",
@@ -89,7 +89,7 @@ const pairs = [];
 for(let i=0;i<images.length;i+=2) pairs.push([i,i+1]);
 
 let currentPair=0;
-const _choices=[];
+const _names=[];
 let userIP="", userAge="", userGender="", timestamp;
 
 const pairDiv=document.getElementById("image-pair");
@@ -126,14 +126,14 @@ function showPair(){
     pairs[currentPair].forEach(i=>{
       const img=document.createElement("img");
       img.src=images[i];
-      img.onclick=()=>selectChoice(i);
+      img.onclick=()=>selectName(i);
       pairDiv.appendChild(img);
     });
   } else showFinalChoice();
 }
 
-function selectChoice(index){
-  _choices.push({pair:currentPair+1,choice:index});
+function selectName(index){
+  _names.push({pair:currentPair+1,name:index});
   currentPair++;
   showPair();
 }
@@ -165,7 +165,7 @@ async function saveFinalChoice(finalIndex){
   const sessionDoc = doc(db,"foodChoices",serialNum.toString());
   await setDoc(sessionDoc,{
     timestamp, age:userAge, gender:userGender, ip:userIP,
-    _choices, finalChoice:finalIndex
+    _names, finalChoice:finalIndex
   });
   finalDiv.innerHTML="<h2>🎉 All done! Thanks for participating.</h2>";
 }
