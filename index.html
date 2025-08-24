@@ -22,31 +22,33 @@
     #final-choice img { width: 220px; height: 220px; } 
   }
 
-  #user-info, #hungry-question { margin-top: 20px; }
-  input, select, button { padding: 5px; margin: 5px; font-size: 16px; }
-  button { cursor: pointer; }
+  #user-info, #step-gender, #step-age, #hungry-question { margin-top: 20px; }
+  button { padding: 10px 20px; margin: 5px; font-size: 16px; cursor: pointer; }
+  input { padding: 5px; margin: 5px; font-size: 16px; width: 80px; }
 </style>
 </head>
 <body>
 <h1>🍽️ Food Chooser</h1>
 
-<!-- Hungry question -->
+<!-- Step 1: Hungry -->
 <div id="hungry-question">
-  <p>Are you hungry?</p>
-  <button id="hungry-yes">Yes</button>
-  <button id="hungry-no">No</button>
+  <p>האם את/ה רעב ?</p>
+  <button id="hungry-yes">כן</button>
+  <button id="hungry-no">לא</button>
 </div>
 
-<!-- Age & gender -->
-<div id="user-info" style="display:none;">
-  <label><input type="number" id="age" min="1" max="120"> :גיל </label>
-  <label>
-    <select id="gender">
-      <option value="">בחר</option>
-      <option value="Male">זכר</option>
-      <option value="Female">נקבה</option>
-    </select>
-   :מין </label>
+<!-- Step 2: Gender -->
+<div id="step-gender" style="display:none;">
+  <p>מין ?</p>
+  <button id="gender-male">זכר</button>
+  <button id="gender-female">נקבה</button>
+</div>
+
+<!-- Step 3: Age -->
+<div id="step-age" style="display:none;">
+  <p>גיל ?</p>
+  <input type="number" id="age" min="1" max="120">
+  <button id="age-submit">Submit</button>
 </div>
 
 <p id="instruction">נא לבחור את המנה שנראית הכי טוב ברגע זה מבין 2 המנות</p>
@@ -110,35 +112,45 @@ const pairCounter=document.getElementById("pair-counter");
 const instruction=document.getElementById("instruction");
 const finalDiv=document.getElementById("final-choice");
 const allDishesDiv=document.getElementById("all-dishes");
-const ageInput=document.getElementById("age");
-const genderSelect=document.getElementById("gender");
+
 const hungryDiv = document.getElementById("hungry-question");
 const hungryYes = document.getElementById("hungry-yes");
 const hungryNo = document.getElementById("hungry-no");
 
-// Handle hungry question
-hungryYes.addEventListener("click",()=>{ userHungry="Yes"; hungryDiv.style.display="none"; document.getElementById("user-info").style.display="block"; });
-hungryNo.addEventListener("click",()=>{ userHungry="No"; hungryDiv.style.display="none"; document.getElementById("user-info").style.display="block"; });
+const genderDiv = document.getElementById("step-gender");
+const genderMale = document.getElementById("gender-male");
+const genderFemale = document.getElementById("gender-female");
 
-function startTestIfValid(){
+const ageDiv = document.getElementById("step-age");
+const ageInput = document.getElementById("age");
+const ageSubmit = document.getElementById("age-submit");
+
+// Step 1: Hungry
+hungryYes.addEventListener("click",()=>{ userHungry="Yes"; hungryDiv.style.display="none"; genderDiv.style.display="block"; });
+hungryNo.addEventListener("click",()=>{ userHungry="No"; hungryDiv.style.display="none"; genderDiv.style.display="block"; });
+
+// Step 2: Gender
+genderMale.addEventListener("click",()=>{ userGender="Male"; genderDiv.style.display="none"; ageDiv.style.display="block"; });
+genderFemale.addEventListener("click",()=>{ userGender="Female"; genderDiv.style.display="none"; ageDiv.style.display="block"; });
+
+// Step 3: Age
+ageSubmit.addEventListener("click",()=>{
   userAge = ageInput.value;
-  userGender = genderSelect.value;
-  if(!userAge || !userGender) return;
+  if(!userAge) return;
+  ageDiv.style.display="none";
+  startTest();
+});
 
-  document.getElementById("user-info").style.display="none";
-
+function startTest(){
   fetch('https://api.ipify.org?format=json')
     .then(res=>res.json())
     .then(data=>{ userIP=data.ip; })
     .catch(()=>{ userIP="unknown"; });
 
   timestamp = new Date();
-  instruction.style.display = "block"; // show header after images start
+  instruction.style.display = "block";
   showPair();
 }
-
-ageInput.addEventListener("change", startTestIfValid);
-genderSelect.addEventListener("change", startTestIfValid);
 
 function showPair(){
   if(currentPair < pairs.length){
@@ -197,5 +209,3 @@ document.addEventListener('touchend',function(event){if(event.touches.length>1) 
 </script>
 </body>
 </html>
-
-
