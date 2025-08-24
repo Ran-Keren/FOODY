@@ -18,9 +18,9 @@
     }
 
     img {
-      width: 240px;          /* ✅ fixed width */
-      height: 240px;         /* ✅ fixed height */
-      object-fit: cover;     /* crops so it always fills the box */
+      width: 240px;
+      height: 240px;
+      object-fit: cover;
       cursor: pointer;
       border: 5px solid transparent;
       border-radius: 10px;
@@ -29,10 +29,17 @@
 
     img:hover { border-color: #007bff; }
 
+    #pair-counter {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 15px;
+      color: #444;
+    }
+
     #final-choice { display: none; margin-top: 30px; }
 
     #final-choice img {
-      width: 190px;          /* ✅ smaller but still fixed size */
+      width: 190px;
       height: 190px;
       object-fit: cover;
       margin: 5px;
@@ -46,8 +53,7 @@
 </head>
 <body>
   <h1>🍽️ Food Chooser</h1>
-  <p>Choose between the two dishes shown:</p>
-
+  <p id="pair-counter"></p>
   <div class="images" id="image-pair"></div>
 
   <div id="final-choice">
@@ -97,26 +103,28 @@
       "https://i.imgur.com/gdhhsZS.jpeg","https://i.imgur.com/dnCbAG1.jpeg","https://i.imgur.com/pAfmo2x.jpeg"
     ];
 
-
+    // Pairs in sequential order (no shuffle)
     const pairs = [];
     for (let i = 0; i < images.length; i += 2) {
-      pairs.push([images[i], images[i + 1]]);
+      pairs.push([i, i + 1]); // store indexes instead of urls
     }
 
     let currentPair = 0;
     const choices = [];
 
     const pairDiv = document.getElementById("image-pair");
+    const pairCounter = document.getElementById("pair-counter");
     const finalDiv = document.getElementById("final-choice");
     const allDishesDiv = document.getElementById("all-dishes");
 
     function showPair() {
       if (currentPair < pairs.length) {
         pairDiv.innerHTML = "";
-        pairs[currentPair].forEach(imgUrl => {
+        pairCounter.textContent = `Pair ${currentPair + 1} of ${pairs.length}`;
+        pairs[currentPair].forEach(index => {
           const img = document.createElement("img");
-          img.src = imgUrl;
-          img.onclick = () => selectChoice(imgUrl);
+          img.src = images[index];
+          img.onclick = () => selectChoice(index);
           pairDiv.appendChild(img);
         });
       } else {
@@ -124,30 +132,31 @@
       }
     }
 
-    async function selectChoice(imgUrl) {
-      choices.push({ pair: currentPair + 1, choice: imgUrl });
+    async function selectChoice(index) {
+      choices.push({ pair: currentPair + 1, choice: index });
       currentPair++;
       showPair();
     }
 
     function showFinalChoice() {
       pairDiv.innerHTML = "";
+      pairCounter.textContent = "";
       finalDiv.style.display = "block";
       allDishesDiv.innerHTML = "";
-      images.forEach(url => {
+      images.forEach((url, index) => {
         const img = document.createElement("img");
         img.src = url;
-        img.onclick = () => saveFinalChoice(url);
+        img.onclick = () => saveFinalChoice(index);
         allDishesDiv.appendChild(img);
       });
     }
 
-    async function saveFinalChoice(finalUrl) {
+    async function saveFinalChoice(finalIndex) {
       try {
         await addDoc(collection(db, "foodChoices"), {
           timestamp: new Date(),
           choices: choices,
-          finalChoice: finalUrl
+          finalChoice: finalIndex
         });
         alert("✅ Thanks! Your choices were saved.");
         finalDiv.innerHTML = "<h2>🎉 All done! Thanks for participating.</h2>";
@@ -161,9 +170,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
