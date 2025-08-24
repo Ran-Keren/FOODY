@@ -23,7 +23,7 @@
   }
 
   #user-info, #step-gender, #step-age, #hungry-question { margin-top: 20px; }
-  button { padding: 10px 20px; margin: 5px; font-size: 20px; cursor: pointer; }
+  button { padding: 10px 10px; margin: 5px; font-size: 18px; cursor: pointer; }
   input { padding: 5px; margin: 5px; font-size: 20px; width: 80px; }
 </style>
 </head>
@@ -32,21 +32,21 @@
 
 <!-- Step 1: Hungry -->
 <div id="hungry-question">
-  <p>? האם את/ה רעב</p>
+  <h2>? האם את/ה רעב</h2>
   <button id="hungry-yes">כן</button>
   <button id="hungry-no">לא</button>
 </div>
 
 <!-- Step 2: Gender -->
 <div id="step-gender" style="display:none;">
-  <p>? מין</p>
+  <h2>? מין</h2>
   <button id="gender-male">זכר</button>
   <button id="gender-female">נקבה</button>
 </div>
 
 <!-- Step 3: Age -->
 <div id="step-age" style="display:none;">
-  <p>? גיל</p>
+  <h2>? גיל</h2>
   <input type="number" id="age" min="1" max="120">
   <button id="age-submit">אישור</button>
 </div>
@@ -209,6 +209,7 @@ document.addEventListener('touchend',function(event){if(event.touches.length>1) 
 </script>
 </body>
 </html>
+
 
 
 
