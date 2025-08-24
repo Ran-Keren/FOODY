@@ -22,22 +22,31 @@
     #final-choice img { width: 220px; height: 220px; } 
   }
 
-  #user-info { margin-top: 20px; }
-  input, select { padding: 5px; margin: 5px; font-size: 16px; }
+  #user-info, #hungry-question { margin-top: 20px; }
+  input, select, button { padding: 5px; margin: 5px; font-size: 16px; }
+  button { cursor: pointer; }
 </style>
 </head>
 <body>
 <h1>🍽️ Food Chooser</h1>
 
-<div id="user-info">
-  <label><input type="number" id="age" min="1" max="120"> מין: </label>
+<!-- Hungry question -->
+<div id="hungry-question">
+  <p>Are you hungry?</p>
+  <button id="hungry-yes">Yes</button>
+  <button id="hungry-no">No</button>
+</div>
+
+<!-- Age & gender -->
+<div id="user-info" style="display:none;">
+  <label><input type="number" id="age" min="1" max="120"> גיל: </label>
   <label>
     <select id="gender">
       <option value="">בחר</option>
       <option value="Male">זכר</option>
       <option value="Female">נקבה</option>
     </select>
- גיל:   </label>
+   :מין </label>
 </div>
 
 <p id="instruction">נא לבחור את המנה שנראית הכי טוב ברגע זה מבין 2 המנות</p>
@@ -94,7 +103,7 @@ for(let i=0;i<images.length;i+=2) pairs.push([i,i+1]);
 
 let currentPair=0;
 const total_choises=[];
-let userIP="", userAge="", userGender="", timestamp;
+let userIP="", userAge="", userGender="", userHungry="", timestamp;
 
 const pairDiv=document.getElementById("image-pair");
 const pairCounter=document.getElementById("pair-counter");
@@ -103,6 +112,13 @@ const finalDiv=document.getElementById("final-choice");
 const allDishesDiv=document.getElementById("all-dishes");
 const ageInput=document.getElementById("age");
 const genderSelect=document.getElementById("gender");
+const hungryDiv = document.getElementById("hungry-question");
+const hungryYes = document.getElementById("hungry-yes");
+const hungryNo = document.getElementById("hungry-no");
+
+// Handle hungry question
+hungryYes.addEventListener("click",()=>{ userHungry="Yes"; hungryDiv.style.display="none"; document.getElementById("user-info").style.display="block"; });
+hungryNo.addEventListener("click",()=>{ userHungry="No"; hungryDiv.style.display="none"; document.getElementById("user-info").style.display="block"; });
 
 function startTestIfValid(){
   userAge = ageInput.value;
@@ -146,10 +162,7 @@ function selectChoice(index){
 function showFinalChoice(){
   pairDiv.innerHTML="";
   pairCounter.textContent="";
-  
-  // Hide first instruction header
-  instruction.style.display = "none";
-  
+  instruction.style.display = "none"; // hide first header
   finalDiv.style.display="block";
   allDishesDiv.innerHTML="";
   images.forEach((url,index)=>{
@@ -173,7 +186,7 @@ async function saveFinalChoice(finalIndex){
 
   const sessionDoc = doc(db,"foodChoices",serialNum.toString());
   await setDoc(sessionDoc,{
-    timestamp, age:userAge, gender:userGender, ip:userIP,
+    timestamp, age:userAge, gender:userGender, hungry:userHungry, ip:userIP,
     total_choises, finalChoice:finalIndex
   });
   finalDiv.innerHTML="<h2>זהו נגמר, תודה על המענה 🎉</h2>";
@@ -184,7 +197,3 @@ document.addEventListener('touchend',function(event){if(event.touches.length>1) 
 </script>
 </body>
 </html>
-
-
-
-
