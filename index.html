@@ -19,7 +19,7 @@
 
     img {
       max-width: 36vw;       /* width capped at 36% of viewport */
-      max-height: 36vh;      /* height capped at 60% of viewport height */
+      max-height: 45vh;      /* height capped at 60% of viewport height */
       object-fit: contain;    /* ensures entire image fits inside box */
       cursor: pointer;
       border: 5px solid transparent;
@@ -33,13 +33,13 @@
 
     #final-choice img {
       max-width: 36vw;
-      max-height: 36vh;
+      max-height: 45vh;
       margin: 5px;
     }
 
-    @media (max-width: 600px) {
-      img { max-width: 72vw; max-height: 50vh; }
-      #final-choice img { max-width: 72vw; max-height: 50vh; }
+    @media (max-width: 500px) {
+      img { max-width: 45vw; max-height: 45vh; }
+      #final-choice img { max-width: 45vw; max-height: 45vh; }
     }
   </style>
 </head>
@@ -161,162 +161,3 @@
   </script>
 </body>
 </html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Food Chooser</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; background: #fafafa; margin: 0; padding: 20px; }
-    h1 { color: #333; }
-
-    .images {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      align-items: center;
-      gap: 20px;
-      margin-top: 20px;
-    }
-
-    img {
-      width: 300px;          /* fixed width */
-      height: 300px;         /* fixed height */
-      object-fit: cover;     /* fill the box, may crop a bit */
-      cursor: pointer;
-      border: 5px solid transparent;
-      border-radius: 10px;
-      transition: transform 0.2s;
-    }
-
-    img:hover { border-color: #007bff; }
-
-    #final-choice { display: none; margin-top: 30px; }
-
-    #final-choice img { width: 160px; height: 160px; margin: 5px; }
-
-    @media (max-width: 600px) {
-      img, #final-choice img {
-        width: 120px;
-        height: 120px;
-      }
-    }
-  </style>
-</head>
-<body>
-  <h1>🍽️ Food Chooser</h1>
-  <p>Choose between the two dishes shown:</p>
-
-  <div class="images" id="image-pair"></div>
-
-  <div id="final-choice">
-    <h2>Now pick the dish you'd actually eat:</h2>
-    <div id="all-dishes" class="images"></div>
-  </div>
-
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyD-9VrD_c2TLM2Y_KLoQVGkKPKn4b9Y-OI",
-      authDomain: "food-chooser-bc60b.firebaseapp.com",
-      projectId: "food-chooser-bc60b",
-      storageBucket: "food-chooser-bc60b.firebasestorage.app",
-      messagingSenderId: "297303551585",
-      appId: "1:297303551585:web:f36e3b6a7ffad325698420",
-      measurementId: "G-DETTDWXNPE"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    const images = [
-      "https://i.imgur.com/7Tzdfer.jpeg","https://i.imgur.com/WuE8mlu.jpeg","https://i.imgur.com/S736Ty1.jpeg",
-      "https://i.imgur.com/CVPqDdn.jpeg","https://i.imgur.com/LNK68XF.jpeg","https://i.imgur.com/sDSy47f.jpeg",
-      "https://i.imgur.com/V5lDaen.jpeg","https://i.imgur.com/7HPk87S.jpeg","https://i.imgur.com/mfYqRc4.jpeg",
-      "https://i.imgur.com/sXsa29x.jpeg","https://i.imgur.com/nXXqMYC.jpeg","https://i.imgur.com/rO8V1En.jpeg",
-      "https://i.imgur.com/SfqtqcB.jpeg","https://i.imgur.com/AM1q93Y.jpeg","https://i.imgur.com/ozv8qjA.jpeg",
-      "https://i.imgur.com/H6KvAOb.jpeg","https://i.imgur.com/qb7mK3C.jpeg","https://i.imgur.com/zmI2evV.jpeg",
-      "https://i.imgur.com/RgXOFNE.jpeg","https://i.imgur.com/DWMENHx.jpeg","https://i.imgur.com/0QwdGYf.jpeg",
-      "https://i.imgur.com/OMyNREK.jpeg","https://i.imgur.com/sUH9kYP.jpeg","https://i.imgur.com/VzWGiGP.jpeg",
-      "https://i.imgur.com/ixv4aWe.jpeg","https://i.imgur.com/njWtxXw.jpeg","https://i.imgur.com/qUkITcm.jpeg",
-      "https://i.imgur.com/5H35Sww.jpeg","https://i.imgur.com/7vaUU12.jpeg","https://i.imgur.com/QQ5csWj.jpeg",
-      "https://i.imgur.com/90VnHK6.jpeg","https://i.imgur.com/kS8mc8S.jpeg","https://i.imgur.com/vciuS0E.jpeg",
-      "https://i.imgur.com/SZNaMgj.jpeg","https://i.imgur.com/16cmJsS.jpeg","https://i.imgur.com/pvfhgan.jpeg",
-      "https://i.imgur.com/6JBpouu.jpeg","https://i.imgur.com/r8Drblq.jpeg","https://i.imgur.com/gU3I4fy.jpeg",
-      "https://i.imgur.com/F0MEJbH.jpeg","https://i.imgur.com/cQ13O91.jpeg","https://i.imgur.com/6daPRNA.jpeg",
-      "https://i.imgur.com/d4NmiOu.jpeg","https://i.imgur.com/EDZSVkb.jpeg","https://i.imgur.com/I5W5tlq.jpeg",
-      "https://i.imgur.com/8M2BP5j.jpeg","https://i.imgur.com/NyW28p4.jpeg","https://i.imgur.com/mrhtZkg.jpeg",
-      "https://i.imgur.com/pZO9izF.jpeg","https://i.imgur.com/ddiJHGX.jpeg","https://i.imgur.com/enSMQUR.jpeg",
-      "https://i.imgur.com/cLVmNWE.jpeg","https://i.imgur.com/mRRLE0L.jpeg","https://i.imgur.com/WXD4gwU.jpeg",
-      "https://i.imgur.com/IQD3UY4.jpeg","https://i.imgur.com/42TedEU.jpeg","https://i.imgur.com/h9LMcqb.jpeg",
-      "https://i.imgur.com/gdhhsZS.jpeg","https://i.imgur.com/dnCbAG1.jpeg","https://i.imgur.com/pAfmo2x.jpeg"
-    ];
-
-    const shuffled = [...images].sort(() => Math.random() - 0.5);
-    const pairs = [];
-    for (let i = 0; i < shuffled.length; i += 2) {
-      pairs.push([shuffled[i], shuffled[i + 1]]);
-    }
-
-    let currentPair = 0;
-    const choices = [];
-
-    const pairDiv = document.getElementById("image-pair");
-    const finalDiv = document.getElementById("final-choice");
-    const allDishesDiv = document.getElementById("all-dishes");
-
-    function showPair() {
-      if (currentPair < pairs.length) {
-        pairDiv.innerHTML = "";
-        pairs[currentPair].forEach(imgUrl => {
-          const img = document.createElement("img");
-          img.src = imgUrl;
-          img.onclick = () => selectChoice(imgUrl);
-          pairDiv.appendChild(img);
-        });
-      } else {
-        showFinalChoice();
-      }
-    }
-
-    async function selectChoice(imgUrl) {
-      choices.push({ pair: currentPair + 1, choice: imgUrl });
-      currentPair++;
-      showPair();
-    }
-
-    function showFinalChoice() {
-      pairDiv.innerHTML = "";
-      finalDiv.style.display = "block";
-      allDishesDiv.innerHTML = "";
-      images.forEach(url => {
-        const img = document.createElement("img");
-        img.src = url;
-        img.onclick = () => saveFinalChoice(url);
-        allDishesDiv.appendChild(img);
-      });
-    }
-
-    async function saveFinalChoice(finalUrl) {
-      try {
-        await addDoc(collection(db, "foodChoices"), {
-          timestamp: new Date(),
-          choices: choices,
-          finalChoice: finalUrl
-        });
-        alert("✅ Thanks! Your choices were saved.");
-        location.reload();
-      } catch (e) {
-        console.error("Error saving: ", e);
-      }
-    }
-
-    showPair();
-  </script>
-</body>
-</html>
-
