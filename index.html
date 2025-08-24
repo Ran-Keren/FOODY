@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Food Chooser</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; background: #fafafa; margin: 0; padding: 20px; }
     h1 { color: #333; }
-    
+
     .images {
       display: flex;
       flex-wrap: wrap;
@@ -25,6 +25,7 @@
       border: 5px solid transparent;
       border-radius: 10px;
       transition: transform 0.2s;
+      touch-action: manipulation;
     }
 
     img:hover { border-color: #007bff; }
@@ -43,46 +44,41 @@
       height: 190px;
       object-fit: cover;
       margin: 5px;
+      touch-action: manipulation;
     }
-
-    #user-form { margin-top: 20px; }
-    #survey-section { display: none; }
 
     @media (max-width: 500px) {
       img { width: 240px; height: 240px; }
       #final-choice img { width: 240px; height: 240px; }
     }
+
+    #user-info { margin-top: 20px; }
+    input, select { padding: 5px; margin: 5px; font-size: 16px; }
+    button { padding: 8px 16px; font-size: 16px; cursor: pointer; }
   </style>
 </head>
 <body>
   <h1>🍽️ Food Chooser</h1>
 
-  <!-- User Info Form -->
-  <div id="user-form">
-    <h2>Before we start</h2>
-    <form id="form">
-      <label>Age: <input type="number" id="age" required></label><br><br>
-      <label>Gender: 
-        <select id="gender" required>
-          <option value="">Select</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-          <option value="other">Other</option>
-        </select>
-      </label><br><br>
-      <button type="submit">Start</button>
-    </form>
+  <div id="user-info">
+    <label>Age: <input type="number" id="age" min="1" max="120"></label>
+    <label>Gender: 
+      <select id="gender">
+        <option value="">Select</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+    </label>
+    <button id="start-btn">Start</button>
   </div>
 
-  <!-- Survey Section -->
-  <div id="survey-section">
-    <p id="pair-counter"></p>
-    <div class="images" id="image-pair"></div>
+  <p id="pair-counter"></p>
+  <div class="images" id="image-pair"></div>
 
-    <div id="final-choice">
-      <h2>Now pick the dish you'd actually eat:</h2>
-      <div id="all-dishes" class="images"></div>
-    </div>
+  <div id="final-choice">
+    <h2>Now pick the dish you'd actually eat:</h2>
+    <div id="all-dishes" class="images"></div>
   </div>
 
   <!-- Firebase SDK -->
@@ -127,34 +123,42 @@
       "https://i.imgur.com/gdhhsZS.jpeg","https://i.imgur.com/dnCbAG1.jpeg","https://i.imgur.com/pAfmo2x.jpeg"
     ];
 
-    // Pairs in sequential order (no shuffle)
     const pairs = [];
     for (let i = 0; i < images.length; i += 2) {
-      pairs.push([i, i + 1]); // store indexes
+      pairs.push([i, i + 1]); // store indexes instead of urls
     }
 
     let currentPair = 0;
     const choices = [];
-    let userInfo = { age: null, gender: null, ip: "unknown" };
+    let userIP = "";
+    let userAge = "";
+    let userGender = "";
 
     const pairDiv = document.getElementById("image-pair");
     const pairCounter = document.getElementById("pair-counter");
     const finalDiv = document.getElementById("final-choice");
     const allDishesDiv = document.getElementById("all-dishes");
+    const startBtn = document.getElementById("start-btn");
 
-    // --- Get IP ---
-    fetch("https://api.ipify.org?format=json")
-      .then(res => res.json())
-      .then(data => userInfo.ip = data.ip)
-      .catch(() => userInfo.ip = "unknown");
+    startBtn.addEventListener("click", async () => {
+      userAge = document.getElementById("age").value;
+      userGender = document.getElementById("gender").value;
+      if(!userAge || !userGender) {
+        alert("Please enter age and select gender.");
+        return;
+      }
 
-    // --- Form handling ---
-    document.getElementById("form").addEventListener("submit", e => {
-      e.preventDefault();
-      userInfo.age = document.getElementById("age").value;
-      userInfo.gender = document.getElementById("gender").value;
-      document.getElementById("user-form").style.display = "none";
-      document.getElementById("survey-section").style.display = "block";
+      // Get user IP
+      try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        userIP = data.ip;
+      } catch(e) {
+        console.error("IP fetch error:", e);
+        userIP = "unknown";
+      }
+
+      document.getElementById("user-info").style.display = "none";
       showPair();
     });
 
@@ -196,11 +200,11 @@
       try {
         await addDoc(collection(db, "foodChoices"), {
           timestamp: new Date(),
-          age: userInfo.age,
-          gender: userInfo.gender,
-          ip: userInfo.ip,
           choices: choices,
-          finalChoice: finalIndex
+          finalChoice: finalIndex,
+          age: userAge,
+          gender: userGender,
+          ip: userIP
         });
         alert("✅ Thanks! Your choices were saved.");
         finalDiv.innerHTML = "<h2>🎉 All done! Thanks for participating.</h2>";
@@ -208,6 +212,14 @@
         console.error("Error saving: ", e);
       }
     }
+
+    // Prevent double-tap zoom
+    document.addEventListener('touchend', function (event) {
+      if (event.touches.length > 1) {
+        event.preventDefault();
+      }
+    }, { passive: false });
+
   </script>
 </body>
 </html>
