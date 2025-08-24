@@ -45,6 +45,9 @@
       margin: 5px;
     }
 
+    #user-form { margin-top: 20px; }
+    #survey-section { display: none; }
+
     @media (max-width: 500px) {
       img { width: 240px; height: 240px; }
       #final-choice img { width: 240px; height: 240px; }
@@ -53,12 +56,33 @@
 </head>
 <body>
   <h1>🍽️ Food Chooser</h1>
-  <p id="pair-counter"></p>
-  <div class="images" id="image-pair"></div>
 
-  <div id="final-choice">
-    <h2>Now pick the dish you'd actually eat:</h2>
-    <div id="all-dishes" class="images"></div>
+  <!-- User Info Form -->
+  <div id="user-form">
+    <h2>Before we start</h2>
+    <form id="form">
+      <label>Age: <input type="number" id="age" required></label><br><br>
+      <label>Gender: 
+        <select id="gender" required>
+          <option value="">Select</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+        </select>
+      </label><br><br>
+      <button type="submit">Start</button>
+    </form>
+  </div>
+
+  <!-- Survey Section -->
+  <div id="survey-section">
+    <p id="pair-counter"></p>
+    <div class="images" id="image-pair"></div>
+
+    <div id="final-choice">
+      <h2>Now pick the dish you'd actually eat:</h2>
+      <div id="all-dishes" class="images"></div>
+    </div>
   </div>
 
   <!-- Firebase SDK -->
@@ -106,16 +130,33 @@
     // Pairs in sequential order (no shuffle)
     const pairs = [];
     for (let i = 0; i < images.length; i += 2) {
-      pairs.push([i, i + 1]); // store indexes instead of urls
+      pairs.push([i, i + 1]); // store indexes
     }
 
     let currentPair = 0;
     const choices = [];
+    let userInfo = { age: null, gender: null, ip: "unknown" };
 
     const pairDiv = document.getElementById("image-pair");
     const pairCounter = document.getElementById("pair-counter");
     const finalDiv = document.getElementById("final-choice");
     const allDishesDiv = document.getElementById("all-dishes");
+
+    // --- Get IP ---
+    fetch("https://api.ipify.org?format=json")
+      .then(res => res.json())
+      .then(data => userInfo.ip = data.ip)
+      .catch(() => userInfo.ip = "unknown");
+
+    // --- Form handling ---
+    document.getElementById("form").addEventListener("submit", e => {
+      e.preventDefault();
+      userInfo.age = document.getElementById("age").value;
+      userInfo.gender = document.getElementById("gender").value;
+      document.getElementById("user-form").style.display = "none";
+      document.getElementById("survey-section").style.display = "block";
+      showPair();
+    });
 
     function showPair() {
       if (currentPair < pairs.length) {
@@ -155,6 +196,9 @@
       try {
         await addDoc(collection(db, "foodChoices"), {
           timestamp: new Date(),
+          age: userInfo.age,
+          gender: userInfo.gender,
+          ip: userInfo.ip,
           choices: choices,
           finalChoice: finalIndex
         });
@@ -164,9 +208,6 @@
         console.error("Error saving: ", e);
       }
     }
-
-    // Start
-    showPair();
   </script>
 </body>
 </html>
