@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Food Chooser</title>
+  <style>
+    body { margin:0; font-family: system-ui, sans-serif; display:flex; justify-content:center; align-items:center; background:#f8f9fa; min-height:100vh; }
+    .app { max-width:900px; width:100%; padding:16px; }
+    .card { background:#fff; border-radius:12px; padding:16px; box-shadow:0 4px 20px rgba(0,0,0,0.08); }
+    .pair { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .imgbtn { border:none; border-radius:12px; overflow:hidden; cursor:pointer; }
+    .imgbtn img { width:100%; height:50vh; object-fit:cover; display:block; }
+    .progress { height:10px; background:#eee; border-radius:5px; margin-bottom:12px; }
+    .progress div { height:100%; width:0%; background:#4f46e5; border-radius:5px; }
+    .hidden { display:none; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; }
+    .imgchoice { border:2px solid transparent; border-radius:12px; cursor:pointer; transition:.1s; }
+    .imgchoice:hover { border-color:#4f46e5; }
+    h2 { margin:10px 0; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <div class="progress"><div id="bar"></div></div>
+      <p id="status"></p>
+
+      <!-- Pairwise phase -->
+      <div id="pairWrap" class="pair">
+        <button id="left" class="imgbtn"><img alt=""></button>
+        <button id="right" class="imgbtn"><img alt=""></button>
+      </div>
+
+      <!-- Final dish selection -->
+      <div id="finalChoice" class="hidden">
+        <h2>Now pick the dish you would eat:</h2>
+        <div id="allGrid" class="grid"></div>
+      </div>
+
+      <!-- Done -->
+      <div id="done" class="hidden">
+        <h2>All done – thanks!</h2>
+        <p>Your choices were recorded.</p>
+        <button id="exportBtn">Export CSV</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // === 1) Your Firebase config ===
+    const firebaseConfig = {
+      apiKey: "AIzaSyD-9VrD_c2TLM2Y_KLoQVGkKPKn4b9Y-OI",
+      authDomain: "food-chooser-bc60b.firebaseapp.com",
+      projectId: "food-chooser-bc60b",
+      storageBucket: "food-chooser-bc60b.firebasestorage.app",
+      messagingSenderId: "297303551585",
+      appId: "1:297303551585:web:f36e3b6a7ffad325698420",
+      measurementId: "G-DETTDWXNPE"
+    };
+
+    // === 2) Import Firebase ===
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // === 3) Image list (replace with your Imgur direct links) ===
+    const IMAGES = [
+      "https://i.imgur.com/0NnV4pH.jpg",
+      "https://i.imgur.com/r6SGPXH.jpg",
+      "https://i.imgur.com/kf0GS6L.jpg",
+      "https://i.imgur.com/FR3EHLn.jpg",
+      "https://i.imgur.com/QPKHK5d.jpg",
+      "https://i.imgur.com/Qt8uJOV.jpg",
+      "https://i.imgur.com/YDq0hDn.jpg",
+      "https://i.imgur.com/bwDJREd.jpg"
+    ];
+    const NUM_PAIRS = 10; // adjust (max ~40)
+
+    // === 4) DOM elements ===
+    const bar = document.getElementById("bar");
+    const status = document.getElementById("status");
+    const leftBtn = document.getElementById("left");
+    const rightBtn = document.getElementById("right");
+    const leftImg = leftBtn.querySelector("img");
+    const rightImg = rightBtn.querySelector("img");
+    const pairWrap = document.getElementById("pairWrap");
+    const finalChoice = document.getElementById("finalChoice");
+    const allGrid = document.getElementById("allGrid");
+    const doneView = document.getElementById("done");
+    const exportBtn = document.getElementById("exportBtn");
+
+    // === 5) State ===
+    const sessionId = (crypto.randomUUID && crypto.randomUUID()) || (Date.now()+"-"+Math.random().toString(36).slice(2));
+    const PAIRS = randomPairs(IMAGES, NUM_PAIRS);
+    let idx = 0;
+
+    // === 6) Helpers ===
+    function randomPairs(images, count) {
+      const pairs = [];
+      while (pairs.length < count) {
+        const a = Math.floor(Math.random() * images.length);
+        let b = Math.floor(Math.random() * images.length);
+        if (a === b) continue;
+        pairs.push({ left: a, right: b });
+      }
+      return pairs;
+    }
+    function setProgress() {
+      bar.style.width = Math.round((idx / NUM_PAIRS) * 100) + "%";
+      status.textContent = idx < NUM_PAIRS
+        ? `Pair ${idx+1} of ${NUM_PAIRS}`
+        : "Comparisons complete!";
+    }
+    function renderPair() {
+      const p = PAIRS[idx];
+      leftImg.src = IMAGES[p.left];
+      rightImg.src = IMAGES[p.right];
+      setProgress();
+    }
+    async function recordResponse(data) {
+      await addDoc(collection(db,"responses"), {
+        sessionId,
+        ...data,
+        createdAt: serverTimestamp()
+      });
+    }
+
+    // === 7) Comparison flow ===
+    async function onChoose(side) {
+      const pair = PAIRS[idx];
+      const chosen = side==="left" ? pair.left : pair.right;
+      await recordResponse({
+        type:"pair",
+        pairIndex: idx,
+        leftImage: IMAGES[pair.left],
+        rightImage: IMAGES[pair.right],
+        chosenImage: IMAGES[chosen]
+      });
+      idx++;
+      if (idx>=NUM_PAIRS) {
+        pairWrap.classList.add("hidden");
+        finalChoice.classList.remove("hidden");
+        renderFinalChoice();
+      } else {
+        renderPair();
+      }
+    }
+    leftBtn.onclick = ()=>onChoose("left");
+    rightBtn.onclick = ()=>onChoose("right");
+    renderPair();
+
+    // === 8) Final dish choice ===
+    function renderFinalChoice() {
+      allGrid.innerHTML="";
+      IMAGES.forEach((url,i)=>{
+        const btn=document.createElement("button");
+        btn.className="imgchoice";
+        btn.innerHTML=`<img src="${url}" style="width:100%;border-radius:12px;">`;
+        btn.onclick=()=>onFinalPick(i);
+        allGrid.appendChild(btn);
+      });
+    }
+    async function onFinalPick(i) {
+      await recordResponse({
+        type:"final",
+        chosenImage: IMAGES[i]
+      });
+      finalChoice.classList.add("hidden");
+      doneView.classList.remove("hidden");
+    }
+
+    // === 9) Export CSV ===
+    exportBtn.onclick=async()=>{
+      const q=query(collection(db,"responses"),where("sessionId","==",sessionId),orderBy("createdAt","asc"));
+      const snap=await getDocs(q);
+      const rows=[["type","pairIndex","leftImage","rightImage","chosenImage","createdAt"]];
+      snap.forEach(doc=>{
+        const d=doc.data();
+        rows.push([d.type,d.pairIndex??"",d.leftImage??"",d.rightImage??"",d.chosenImage??"",d.createdAt?.toDate().toISOString()??""]);
+      });
+      const csv=rows.map(r=>r.join(",")).join("\n");
+      const blob=new Blob([csv],{type:"text/csv"});
+      const a=document.createElement("a");
+      a.href=URL.createObjectURL(blob);
+      a.download="responses.csv";
+      a.click();
+    }
+  </script>
+</body>
+</html>
