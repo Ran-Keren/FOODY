@@ -3,224 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Foody Pairs</title>
+  <title>Food Chooser</title>
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: sans-serif;
-      background: #f8f8f8;
+    body { font-family: Arial, sans-serif; text-align: center; background: #fafafa; margin: 0; padding: 20px; }
+    h1 { color: #333; }
+
+    .images {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 500px; /* keeps it centered and clean */
-      padding: 10px;
-    }
-
-    .pair {
-      display: flex;
-      flex-direction: column;
       align-items: center;
-      margin-bottom: 20px;
+      gap: 20px;
+      margin-top: 20px;
     }
 
-    .pair img {
-      width: 100%;
-      max-width: 450px; /* consistent max width */
-      height: 250px;    /* fixed height for uniform look */
-      object-fit: cover; /* crops if aspect ratio differs */
-      border-radius: 12px;
-      margin: 5px 0;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    img {
+      width: 300px;          /* fixed width */
+      height: 300px;         /* fixed height */
+      object-fit: cover;     /* fill the box, may crop a bit */
+      cursor: pointer;
+      border: 5px solid transparent;
+      border-radius: 10px;
+      transition: transform 0.2s;
+    }
+
+    img:hover { border-color: #007bff; }
+
+    #final-choice { display: none; margin-top: 30px; }
+
+    #final-choice img { width: 160px; height: 160px; margin: 5px; }
+
+    @media (max-width: 600px) {
+      img, #final-choice img {
+        width: 120px;
+        height: 120px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <h1>🍽️ Food Chooser</h1>
+  <p>Choose between the two dishes shown:</p>
 
-    <!-- Pair 1 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/7Tzdfer.jpeg" alt="Image 1">
-      <img src="https://i.imgur.com/WuE8mlu.jpeg" alt="Image 2">
-    </div>
+  <div class="images" id="image-pair"></div>
 
-    <!-- Pair 2 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/S736Ty1.jpeg" alt="Image 3">
-      <img src="https://i.imgur.com/CVPqDdn.jpeg" alt="Image 4">
-    </div>
-
-    <!-- Pair 3 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/LNK68XF.jpeg" alt="Image 5">
-      <img src="https://i.imgur.com/sDSy47f.jpeg" alt="Image 6">
-    </div>
-
-    <!-- Pair 4 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/YzTXQZj.jpeg" alt="Image 7">
-      <img src="https://i.imgur.com/dZcIunZ.jpeg" alt="Image 8">
-    </div>
-
-    <!-- Pair 5 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/5X8Zz8k.jpeg" alt="Image 9">
-      <img src="https://i.imgur.com/8QctJjD.jpeg" alt="Image 10">
-    </div>
-
-    <!-- Pair 6 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/yB3QxPR.jpeg" alt="Image 11">
-      <img src="https://i.imgur.com/xihY03j.jpeg" alt="Image 12">
-    </div>
-
-    <!-- Pair 7 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/jXrr7YN.jpeg" alt="Image 13">
-      <img src="https://i.imgur.com/VFtF7Su.jpeg" alt="Image 14">
-    </div>
-
-    <!-- Pair 8 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/RHktDXz.jpeg" alt="Image 15">
-      <img src="https://i.imgur.com/qwJc31Q.jpeg" alt="Image 16">
-    </div>
-
-    <!-- Pair 9 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/vyCylHF.jpeg" alt="Image 17">
-      <img src="https://i.imgur.com/fbwM5eD.jpeg" alt="Image 18">
-    </div>
-
-    <!-- Pair 10 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/pLeJ9nC.jpeg" alt="Image 19">
-      <img src="https://i.imgur.com/xT0Qihm.jpeg" alt="Image 20">
-    </div>
-
-    <!-- Pair 11 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/BcMgbRq.jpeg" alt="Image 21">
-      <img src="https://i.imgur.com/c7QViKH.jpeg" alt="Image 22">
-    </div>
-
-    <!-- Pair 12 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/q75A8dt.jpeg" alt="Image 23">
-      <img src="https://i.imgur.com/ylSrrRl.jpeg" alt="Image 24">
-    </div>
-
-    <!-- Pair 13 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/zpmLkqH.jpeg" alt="Image 25">
-      <img src="https://i.imgur.com/GxauZnP.jpeg" alt="Image 26">
-    </div>
-
-    <!-- Pair 14 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/TxQTSnQ.jpeg" alt="Image 27">
-      <img src="https://i.imgur.com/h0pI5w1.jpeg" alt="Image 28">
-    </div>
-
-    <!-- Pair 15 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/Ji0XvCJ.jpeg" alt="Image 29">
-      <img src="https://i.imgur.com/4OiqrLi.jpeg" alt="Image 30">
-    </div>
-
-    <!-- Pair 16 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/pQqXkBa.jpeg" alt="Image 31">
-      <img src="https://i.imgur.com/9Zfpe7q.jpeg" alt="Image 32">
-    </div>
-
-    <!-- Pair 17 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/DXfbkSf.jpeg" alt="Image 33">
-      <img src="https://i.imgur.com/yh9LcoF.jpeg" alt="Image 34">
-    </div>
-
-    <!-- Pair 18 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/2tWZUKb.jpeg" alt="Image 35">
-      <img src="https://i.imgur.com/gpG2iOP.jpeg" alt="Image 36">
-    </div>
-
-    <!-- Pair 19 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/LqCOCzt.jpeg" alt="Image 37">
-      <img src="https://i.imgur.com/sqMfk6F.jpeg" alt="Image 38">
-    </div>
-
-    <!-- Pair 20 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/z6cWZqJ.jpeg" alt="Image 39">
-      <img src="https://i.imgur.com/yE8y3Je.jpeg" alt="Image 40">
-    </div>
-
-    <!-- Pair 21 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/l6X7AmY.jpeg" alt="Image 41">
-      <img src="https://i.imgur.com/n4gfShJ.jpeg" alt="Image 42">
-    </div>
-
-    <!-- Pair 22 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/nOAEwUu.jpeg" alt="Image 43">
-      <img src="https://i.imgur.com/FGxZSev.jpeg" alt="Image 44">
-    </div>
-
-    <!-- Pair 23 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/hAxfTIU.jpeg" alt="Image 45">
-      <img src="https://i.imgur.com/QjqezJN.jpeg" alt="Image 46">
-    </div>
-
-    <!-- Pair 24 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/pVvnbGa.jpeg" alt="Image 47">
-      <img src="https://i.imgur.com/xuwSx5U.jpeg" alt="Image 48">
-    </div>
-
-    <!-- Pair 25 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/B9U2huW.jpeg" alt="Image 49">
-      <img src="https://i.imgur.com/vz7NUIA.jpeg" alt="Image 50">
-    </div>
-
-    <!-- Pair 26 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/Q3Hpcvn.jpeg" alt="Image 51">
-      <img src="https://i.imgur.com/L2DNgNR.jpeg" alt="Image 52">
-    </div>
-
-    <!-- Pair 27 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/irHuMn6.jpeg" alt="Image 53">
-      <img src="https://i.imgur.com/Ut6slUX.jpeg" alt="Image 54">
-    </div>
-
-    <!-- Pair 28 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/HjE4jVh.jpeg" alt="Image 55">
-      <img src="https://i.imgur.com/GufdZNu.jpeg" alt="Image 56">
-    </div>
-
-    <!-- Pair 29 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/HOi6cqk.jpeg" alt="Image 57">
-      <img src="https://i.imgur.com/7Lb0fDQ.jpeg" alt="Image 58">
-    </div>
-
-    <!-- Pair 30 -->
-    <div class="pair">
-      <img src="https://i.imgur.com/uqcfdnH.jpeg" alt="Image 59">
-      <img src="https://i.imgur.com/j8J3wEV.jpeg" alt="Image 60">
-    </div>
-
+  <div id="final-choice">
+    <h2>Now pick the dish you'd actually eat:</h2>
+    <div id="all-dishes" class="images"></div>
   </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD-9VrD_c2TLM2Y_KLoQVGkKPKn4b9Y-OI",
+      authDomain: "food-chooser-bc60b.firebaseapp.com",
+      projectId: "food-chooser-bc60b",
+      storageBucket: "food-chooser-bc60b.firebasestorage.app",
+      messagingSenderId: "297303551585",
+      appId: "1:297303551585:web:f36e3b6a7ffad325698420",
+      measurementId: "G-DETTDWXNPE"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const images = [
+      "https://i.imgur.com/7Tzdfer.jpeg","https://i.imgur.com/WuE8mlu.jpeg","https://i.imgur.com/S736Ty1.jpeg",
+      "https://i.imgur.com/CVPqDdn.jpeg","https://i.imgur.com/LNK68XF.jpeg","https://i.imgur.com/sDSy47f.jpeg",
+      "https://i.imgur.com/V5lDaen.jpeg","https://i.imgur.com/7HPk87S.jpeg","https://i.imgur.com/mfYqRc4.jpeg",
+      "https://i.imgur.com/sXsa29x.jpeg","https://i.imgur.com/nXXqMYC.jpeg","https://i.imgur.com/rO8V1En.jpeg",
+      "https://i.imgur.com/SfqtqcB.jpeg","https://i.imgur.com/AM1q93Y.jpeg","https://i.imgur.com/ozv8qjA.jpeg",
+      "https://i.imgur.com/H6KvAOb.jpeg","https://i.imgur.com/qb7mK3C.jpeg","https://i.imgur.com/zmI2evV.jpeg",
+      "https://i.imgur.com/RgXOFNE.jpeg","https://i.imgur.com/DWMENHx.jpeg","https://i.imgur.com/0QwdGYf.jpeg",
+      "https://i.imgur.com/OMyNREK.jpeg","https://i.imgur.com/sUH9kYP.jpeg","https://i.imgur.com/VzWGiGP.jpeg",
+      "https://i.imgur.com/ixv4aWe.jpeg","https://i.imgur.com/njWtxXw.jpeg","https://i.imgur.com/qUkITcm.jpeg",
+      "https://i.imgur.com/5H35Sww.jpeg","https://i.imgur.com/7vaUU12.jpeg","https://i.imgur.com/QQ5csWj.jpeg",
+      "https://i.imgur.com/90VnHK6.jpeg","https://i.imgur.com/kS8mc8S.jpeg","https://i.imgur.com/vciuS0E.jpeg",
+      "https://i.imgur.com/SZNaMgj.jpeg","https://i.imgur.com/16cmJsS.jpeg","https://i.imgur.com/pvfhgan.jpeg",
+      "https://i.imgur.com/6JBpouu.jpeg","https://i.imgur.com/r8Drblq.jpeg","https://i.imgur.com/gU3I4fy.jpeg",
+      "https://i.imgur.com/F0MEJbH.jpeg","https://i.imgur.com/cQ13O91.jpeg","https://i.imgur.com/6daPRNA.jpeg",
+      "https://i.imgur.com/d4NmiOu.jpeg","https://i.imgur.com/EDZSVkb.jpeg","https://i.imgur.com/I5W5tlq.jpeg",
+      "https://i.imgur.com/8M2BP5j.jpeg","https://i.imgur.com/NyW28p4.jpeg","https://i.imgur.com/mrhtZkg.jpeg",
+      "https://i.imgur.com/pZO9izF.jpeg","https://i.imgur.com/ddiJHGX.jpeg","https://i.imgur.com/enSMQUR.jpeg",
+      "https://i.imgur.com/cLVmNWE.jpeg","https://i.imgur.com/mRRLE0L.jpeg","https://i.imgur.com/WXD4gwU.jpeg",
+      "https://i.imgur.com/IQD3UY4.jpeg","https://i.imgur.com/42TedEU.jpeg","https://i.imgur.com/h9LMcqb.jpeg",
+      "https://i.imgur.com/gdhhsZS.jpeg","https://i.imgur.com/dnCbAG1.jpeg","https://i.imgur.com/pAfmo2x.jpeg"
+    ];
+
+    const shuffled = [...images].sort(() => Math.random() - 0.5);
+    const pairs = [];
+    for (let i = 0; i < shuffled.length; i += 2) {
+      pairs.push([shuffled[i], shuffled[i + 1]]);
+    }
+
+    let currentPair = 0;
+    const choices = [];
+
+    const pairDiv = document.getElementById("image-pair");
+    const finalDiv = document.getElementById("final-choice");
+    const allDishesDiv = document.getElementById("all-dishes");
+
+    function showPair() {
+      if (currentPair < pairs.length) {
+        pairDiv.innerHTML = "";
+        pairs[currentPair].forEach(imgUrl => {
+          const img = document.createElement("img");
+          img.src = imgUrl;
+          img.onclick = () => selectChoice(imgUrl);
+          pairDiv.appendChild(img);
+        });
+      } else {
+        showFinalChoice();
+      }
+    }
+
+    async function selectChoice(imgUrl) {
+      choices.push({ pair: currentPair + 1, choice: imgUrl });
+      currentPair++;
+      showPair();
+    }
+
+    function showFinalChoice() {
+      pairDiv.innerHTML = "";
+      finalDiv.style.display = "block";
+      allDishesDiv.innerHTML = "";
+      images.forEach(url => {
+        const img = document.createElement("img");
+        img.src = url;
+        img.onclick = () => saveFinalChoice(url);
+        allDishesDiv.appendChild(img);
+      });
+    }
+
+    async function saveFinalChoice(finalUrl) {
+      try {
+        await addDoc(collection(db, "foodChoices"), {
+          timestamp: new Date(),
+          choices: choices,
+          finalChoice: finalUrl
+        });
+        alert("✅ Thanks! Your choices were saved.");
+        location.reload();
+      } catch (e) {
+        console.error("Error saving: ", e);
+      }
+    }
+
+    showPair();
+  </script>
 </body>
 </html>
