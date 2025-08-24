@@ -47,7 +47,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, doc, addDoc, getDoc, setDoc, increment, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD-9VrD_c2TLM2Y_KLoQVGkKPKn4b9Y-OI",
@@ -62,7 +62,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ---- IMAGES (60 total) ----
 const images = [
   "https://i.imgur.com/7Tzdfer.jpeg","https://i.imgur.com/WuE8mlu.jpeg","https://i.imgur.com/S736Ty1.jpeg",
   "https://i.imgur.com/CVPqDdn.jpeg","https://i.imgur.com/LNK68XF.jpeg","https://i.imgur.com/sDSy47f.jpeg",
@@ -134,7 +133,7 @@ function showPair(){
 }
 
 function selectChoice(index){
-  choices.push({pair:currentPair+1,choice:index});
+  _choices.push({pair:currentPair+1,choice:index});
   currentPair++;
   showPair();
 }
@@ -157,7 +156,6 @@ async function saveFinalChoice(finalIndex){
   if(finalChoiceSaved) return;
   finalChoiceSaved=true;
 
-  // Get next serial number from a separate counter doc
   const counterRef = doc(db,"counters","foodSession");
   let counterSnap = await getDoc(counterRef);
   let serialNum = 1;
@@ -167,7 +165,7 @@ async function saveFinalChoice(finalIndex){
   const sessionDoc = doc(db,"foodChoices",serialNum.toString());
   await setDoc(sessionDoc,{
     timestamp, age:userAge, gender:userGender, ip:userIP,
-    choices, finalChoice:finalIndex
+    _choices, finalChoice:finalIndex
   });
   finalDiv.innerHTML="<h2>🎉 All done! Thanks for participating.</h2>";
 }
@@ -177,5 +175,3 @@ document.addEventListener('touchend',function(event){if(event.touches.length>1) 
 </script>
 </body>
 </html>
-
-
