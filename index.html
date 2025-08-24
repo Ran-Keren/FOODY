@@ -151,7 +151,7 @@
           finalChoice: finalUrl
         });
         alert("✅ Thanks! Your choices were saved.");
-        location.reload();
+        finalDiv.innerHTML = "<h2>🎉 All done! Thanks for participating.</h2>";
       } catch (e) {
         console.error("Error saving: ", e);
       }
@@ -162,6 +162,7 @@
   </script>
 </body>
 </html>
+
 
 
 
