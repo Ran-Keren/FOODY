@@ -117,8 +117,6 @@ const images = [
 ];
 
 const pairs = [];
-for(let i=0;i<images.length;i+=2) pairs.push([i,i+1]);
-
 let currentPair=0;
 const total_choises=[];
 let userIP="", userAge="", userGender="", userHungry="", timestamp;
@@ -150,21 +148,51 @@ genderMale.addEventListener("click",()=>{ userGender="Male"; genderDiv.style.dis
 genderFemale.addEventListener("click",()=>{ userGender="Female"; genderDiv.style.display="none"; ageDiv.style.display="block"; });
 
 // Step 3: Age
-ageSubmit.addEventListener("click",()=>{
-  userAge = ageInput.value;
-  if(!userAge) return;
-  ageDiv.style.display="none";
-  startTest();
-});
+ageSubmit.addEventListener("click",()=>{ userAge = ageInput.value; if(!userAge) return; ageDiv.style.display="none"; startTest(); });
 
-function startTest(){
+// ------------------ Dynamic Pairing ------------------
+function generateDynamicPairs(images, previousChoices) {
+  let imgs = [...images];
+  let boostedIndices = [];
+
+  if (previousChoices && previousChoices.length > 0) {
+    previousChoices.forEach(choice => boostedIndices.push(choice.choice));
+  }
+
+  imgs.sort(() => Math.random() - 0.5);
+
+  if (boostedIndices.length > 0) {
+    const boostedImgs = boostedIndices.map(i => images[i]);
+    const otherImgs = imgs.filter(url => !boostedImgs.includes(url));
+    imgs = [...boostedImgs, ...otherImgs];
+  }
+
+  const dynamicPairs = [];
+  for (let i = 0; i < imgs.length; i += 2) {
+    if (i + 1 < imgs.length) dynamicPairs.push([imgs[i], imgs[i + 1]]);
+  }
+  return dynamicPairs;
+}
+
+// ------------------ Main Test Logic ------------------
+function startTest() {
   fetch('https://api.ipify.org?format=json')
-    .then(res=>res.json())
-    .then(data=>{ userIP=data.ip; })
-    .catch(()=>{ userIP="unknown"; });
+    .then(res => res.json())
+    .then(data => { userIP = data.ip; })
+    .catch(() => { userIP = "unknown"; });
 
   timestamp = new Date();
   instruction.style.display = "block";
+
+  const dynamicPairsURLs = generateDynamicPairs(images, total_choises);
+
+  pairs.length = 0; // clear existing
+  dynamicPairsURLs.forEach(pair => {
+    const idx1 = images.indexOf(pair[0]);
+    const idx2 = images.indexOf(pair[1]);
+    pairs.push([idx1, idx2]);
+  });
+
   showPair();
 }
 
@@ -221,7 +249,6 @@ async function saveFinalChoice(finalIndex){
 }
 
 // ------------------ Mobile touch protections ------------------
-// Disable pinch zoom, double-tap zoom, pull-to-refresh
 let lastTouchEnd = 0;
 document.addEventListener('touchstart', e => { if(e.touches.length > 1) e.preventDefault(); }, { passive:false });
 document.addEventListener('touchend', e => { 
@@ -234,12 +261,10 @@ let touchStartY = 0;
 document.addEventListener('touchstart', e => { if(e.touches.length === 1) touchStartY = e.touches[0].clientY; }, { passive:false });
 document.addEventListener('touchmove', e => {
   const touchY = e.touches[0].clientY;
-  if(window.scrollY === 0 && touchY > touchStartY) e.preventDefault(); // stop pull-to-refresh
+  if(window.scrollY === 0 && touchY > touchStartY) e.preventDefault();
 }, { passive:false });
 
-// Force touch-action on inputs and selects
 document.querySelectorAll('input, select, button').forEach(el => el.style.touchAction = "manipulation");
 </script>
 </body>
 </html>
-
