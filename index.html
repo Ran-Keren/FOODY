@@ -116,7 +116,192 @@ const images = [
   "https://i.imgur.com/gdhhsZS.jpeg","https://i.imgur.com/dnCbAG1.jpeg","https://i.imgur.com/pAfmo2x.jpeg"
 ];
 
+// Keep your original pairs variable. We'll grow it dynamically in real-time.
 const pairs = [];
+for(let i=0;i<images.length;i+=2) pairs.push([i,i+1]); // original static fill (left as-is)
+
+// --- Real-time Recommendation Additions (non-breaking) ---
+
+// Category vocab
+const V = {
+  temperature: ["Hot","Warm","Cold","Frozen"],
+  texture: ["Crunchy","Soft","Juicy","Dry","Creamy","Chewy","Crispy","Tender","Smooth","Sticky"],
+  flavor: ["Sweet","Salty","Sour","Bitter","Umami","Spicy","Mild"],
+  moisture: ["Dry","Moist","Oily","Saucy","Grilled","Steamed"],
+  protein: ["Beef","Chicken","Lamb","Fish","Pork","Seafood","Vegetarian","Vegan"],
+  carbs: ["Rice","Pasta","Bread","Potato","Grains"],
+  veggies: ["Leafy","Root","Citrus","Tropical","Seasonal"],
+  dairy: ["Cheese-based","Cream-based","Milk-free","None"],
+  health: ["Low-calorie","High-protein","Low-fat","Gluten-free","Keto","Vegan-friendly"],
+  cuisine: ["Italian","Chinese","Japanese","Thai","Indian","Israeli","Turkish","Lebanese","American","Mediterranean","Latin American","African","Modern/Fusion"],
+  style: ["Street food","Gourmet","Homemade","Fast food","Traditional","Modern/Fusion"],
+  visual: ["Colorful","Monotone","Organized","Messy","Minimalist","Rich","Layered"],
+  shape: ["Bowl","Plate","Finger food","Wrap","Skewer","Soup"],
+  size: ["Small bite","Medium","Large","Sharing-size"],
+  cooking: ["Grilled","Fried","Roasted","Steamed","Baked","Boiled","Raw"],
+  sauce: ["With sauce","No sauce","Light sauce","Heavy sauce"],
+  spice: ["Mild","Medium","Spicy","Very spicy"]
+};
+
+// Deterministic pseudo-labels so EVERY image is labeled now.
+// You can later replace per-image entries in foodMeta with accurate tags.
+function hashPick(arr, seed){ return arr[ seed % arr.length ]; }
+function hashPicks(arr, seed, k=2){
+  const picks = new Set();
+  for(let i=0; picks.size<k && i<arr.length*2; i++){
+    picks.add(arr[(seed+i*3)%arr.length]);
+  }
+  return Array.from(picks);
+}
+
+// Full meta per image index
+const foodMeta = images.map((url, idx) => ({
+  url,
+  categories: {
+    temperature: hashPick(V.temperature, idx),
+    texture: hashPicks(V.texture, idx*7+1, 2),
+    flavor: hashPicks(V.flavor, idx*11+3, 2),
+    moisture: hashPicks(V.moisture, idx*13+5, 2),
+    protein: hashPick(V.protein, idx*17+7),
+    carbs: hashPick(V.carbs, idx*19+9),
+    veggies: hashPicks(V.veggies, idx*23+11, 2),
+    dairy: hashPick(V.dairy, idx*29+13),
+    health: hashPicks(V.health, idx*31+15, 2),
+    cuisine: hashPick(V.cuisine, idx*37+17),
+    style: hashPick(V.style, idx*41+19),
+    visual: hashPicks(V.visual, idx*43+21, 2),
+    shape: hashPick(V.shape, idx*47+23),
+    size: hashPick(V.size, idx*53+25),
+    cooking: hashPick(V.cooking, idx*59+27),
+    sauce: hashPick(V.sauce, idx*61+29),
+    spice: hashPick(V.spice, idx*67+31)
+  }
+}));
+
+// Weights to "boost subjects" (tune these to push certain properties)
+const W = {
+  temperature: 2,
+  protein: 3,
+  carbs: 2,
+  cuisine: 2,
+  style: 1,
+  sauce: 1,
+  spice: 1,
+  texture: 1,
+  flavor: 1,
+  moisture: 1,
+  veggies: 1,
+  visual: 1,
+  dairy: 1,
+  health: 1,
+  shape: 0.5,
+  size: 0.5,
+  cooking: 1
+};
+
+// Similarity score of candidate item index vs previous choices
+function similarityScore(idx, choices){
+  if(choices.length===0) return 0;
+  const item = foodMeta[idx].categories;
+  let score = 0;
+
+  for(const ch of choices){
+    const prev = foodMeta[ch.choice]?.categories;
+    if(!prev) continue;
+
+    // single-value comparisons
+    if(prev.temperature===item.temperature) score += W.temperature;
+    if(prev.protein===item.protein)         score += W.protein;
+    if(prev.carbs===item.carbs)             score += W.carbs;
+    if(prev.cuisine===item.cuisine)         score += W.cuisine;
+    if(prev.style===item.style)             score += W.style;
+    if(prev.sauce===item.sauce)             score += W.sauce;
+    if(prev.spice===item.spice)             score += W.spice;
+    if(prev.dairy===item.dairy)             score += W.dairy;
+    if(prev.shape===item.shape)             score += W.shape;
+    if(prev.size===item.size)               score += W.size;
+    if(prev.cooking===item.cooking)         score += W.cooking;
+
+    // multi-value overlap
+    const overlap = (a,b)=>a.filter(x=>b.includes(x)).length;
+    score += overlap(prev.texture,item.texture) * W.texture;
+    score += overlap(prev.flavor,item.flavor)   * W.flavor;
+    score += overlap(prev.moisture,item.moisture)*W.moisture;
+    score += overlap(prev.veggies,item.veggies) * W.veggies;
+    score += overlap(prev.visual,item.visual)   * W.visual;
+
+    // health is multi too
+    const ph = Array.isArray(prev.health)?prev.health:[prev.health];
+    const ih = Array.isArray(item.health)?item.health:[item.health];
+    score += overlap(ph, ih) * W.health;
+  }
+
+  // small exploration noise so we don't get stuck
+  score += Math.random() * 0.25;
+  return score;
+}
+
+// Track which images we’ve recently shown to add diversity
+const recentlyShown = new Set();
+const RECENT_WINDOW = 8;
+
+// Choose next best pair given history
+function chooseNextPair(choices){
+  // candidate pool (prefer not-yet-shown)
+  const allIdx = images.map((_,i)=>i);
+  const poolA = allIdx.filter(i=>!recentlyShown.has(i));
+  const pool = poolA.length >= 6 ? poolA : allIdx; // fallback if pool too small
+
+  // rank by similarity
+  const ranked = pool
+    .map(i => ({ i, s: similarityScore(i, choices)}))
+    .sort((a,b)=>b.s-a.s);
+
+  // pick first
+  const first = ranked[0]?.i ?? allIdx[0];
+
+  // for second, re-rank excluding first, add mild dissimilarity penalty to avoid two identical styles
+  const ranked2 = pool
+    .filter(i=>i!==first)
+    .map(i=>{
+      // encourage diversity between the pair
+      const simToFirst = pairSimilarity(first, i);
+      return { i, s: similarityScore(i, choices) - simToFirst*0.3 };
+    })
+    .sort((a,b)=>b.s-a.s);
+
+  const second = ranked2[0]?.i ?? (allIdx.find(i=>i!==first) ?? first);
+
+  // update recent window
+  recentlyShown.add(first);
+  recentlyShown.add(second);
+  while(recentlyShown.size > RECENT_WINDOW){
+    // drop oldest by recreating set from current pairs window (simple reset each few steps)
+    recentlyShown.clear();
+    break;
+  }
+  return [first, second];
+}
+
+// similarity between two items (for diversity inside a pair)
+function pairSimilarity(aIdx, bIdx){
+  const A = foodMeta[aIdx].categories;
+  const B = foodMeta[bIdx].categories;
+  let s = 0;
+  if(A.temperature===B.temperature) s+=1;
+  if(A.protein===B.protein) s+=1.5;
+  if(A.carbs===B.carbs) s+=1;
+  if(A.cuisine===B.cuisine) s+=1;
+  if(A.style===B.style) s+=0.5;
+  if(A.spice===B.spice) s+=0.5;
+  const overlap = (a,b)=>a.filter(x=>b.includes(x)).length;
+  s += overlap(A.texture,B.texture)*0.2;
+  s += overlap(A.flavor,B.flavor)*0.2;
+  s += overlap(A.visual,B.visual)*0.2;
+  return s;
+}
+
+// ------------------ Your original state/DOM ------------------
 let currentPair=0;
 const total_choises=[];
 let userIP="", userAge="", userGender="", userHungry="", timestamp;
@@ -150,68 +335,51 @@ genderFemale.addEventListener("click",()=>{ userGender="Female"; genderDiv.style
 // Step 3: Age
 ageSubmit.addEventListener("click",()=>{ userAge = ageInput.value; if(!userAge) return; ageDiv.style.display="none"; startTest(); });
 
-// ------------------ Dynamic Pairing ------------------
-function generateDynamicPairs(images, previousChoices) {
-  let imgs = [...images];
-  let boostedIndices = [];
-
-  if (previousChoices && previousChoices.length > 0) {
-    previousChoices.forEach(choice => boostedIndices.push(choice.choice));
-  }
-
-  imgs.sort(() => Math.random() - 0.5);
-
-  if (boostedIndices.length > 0) {
-    const boostedImgs = boostedIndices.map(i => images[i]);
-    const otherImgs = imgs.filter(url => !boostedImgs.includes(url));
-    imgs = [...boostedImgs, ...otherImgs];
-  }
-
-  const dynamicPairs = [];
-  for (let i = 0; i < imgs.length; i += 2) {
-    if (i + 1 < imgs.length) dynamicPairs.push([imgs[i], imgs[i + 1]]);
-  }
-  return dynamicPairs;
-}
-
-// ------------------ Main Test Logic ------------------
-function startTest() {
+// ------------------ Main Test Logic (adaptive) ------------------
+function startTest(){
   fetch('https://api.ipify.org?format=json')
-    .then(res => res.json())
-    .then(data => { userIP = data.ip; })
-    .catch(() => { userIP = "unknown"; });
+    .then(res=>res.json())
+    .then(data=>{ userIP=data.ip; })
+    .catch(()=>{ userIP="unknown"; });
 
   timestamp = new Date();
   instruction.style.display = "block";
 
-  const dynamicPairsURLs = generateDynamicPairs(images, total_choises);
+  // reset dynamic run
+  pairs.length = 0;        // we will push pairs as we go (real-time)
+  currentPair = 0;
+  recentlyShown.clear();
 
-  pairs.length = 0; // clear existing
-  dynamicPairsURLs.forEach(pair => {
-    const idx1 = images.indexOf(pair[0]);
-    const idx2 = images.indexOf(pair[1]);
-    pairs.push([idx1, idx2]);
-  });
+  // seed the first pair
+  pairs.push( chooseNextPair(total_choises) );
 
   showPair();
 }
 
 function showPair(){
+  // if we already consumed all generated pairs, create the next one now
+  if(currentPair >= pairs.length){
+    pairs.push( chooseNextPair(total_choises) );
+  }
+
   if(currentPair < pairs.length){
     pairDiv.innerHTML="";
-    pairCounter.textContent=`מנה ${currentPair+1} מתוך ${pairs.length}`;
+    pairCounter.textContent=`מנה ${currentPair+1} מתוך ${Math.ceil(images.length/2)}`;
     pairs[currentPair].forEach(i=>{
       const img=document.createElement("img");
-      img.src=images[i];
+      img.src=images[i]; // keep using your original images array
       img.onclick=()=>selectChoice(i);
       pairDiv.appendChild(img);
     });
-  } else showFinalChoice();
+  } else {
+    showFinalChoice();
+  }
 }
 
 function selectChoice(index){
   total_choises.push({pair:currentPair+1,choice:index});
   currentPair++;
+  // adapt in real time: the next call to showPair() will create a new pair based on history
   showPair();
 }
 
@@ -261,9 +429,10 @@ let touchStartY = 0;
 document.addEventListener('touchstart', e => { if(e.touches.length === 1) touchStartY = e.touches[0].clientY; }, { passive:false });
 document.addEventListener('touchmove', e => {
   const touchY = e.touches[0].clientY;
-  if(window.scrollY === 0 && touchY > touchStartY) e.preventDefault();
+  if(window.scrollY === 0 && touchY > touchStartY) e.preventDefault(); // stop pull-to-refresh
 }, { passive:false });
 
+// Force touch-action on inputs and selects
 document.querySelectorAll('input, select, button').forEach(el => el.style.touchAction = "manipulation");
 </script>
 </body>
